@@ -1,46 +1,45 @@
-import in.co.gorest.config.Config;
+import in.co.gorest.api.ApiClient;
+import in.co.gorest.controllers.UsersController;
+import in.co.gorest.model.domain.User;
+import in.co.gorest.model.domain.UsersManager;
+import in.co.gorest.model.dto.PostUsersRequestDto;
 import in.co.gorest.services.RandomGenerator;
-import io.restassured.RestAssured;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
+// 1. Extract all requests code to controllers
+// 2. Introduce DTOs
+// 3. Domain models
+// 4. Builder
+// 5. Manager addon
+// 6. Mapper
+// 7. Request objects
+// 8. API Client
 public class BasicTest2 {
+    private ApiClient api;
+    private User consumer;
 
-    @BeforeAll
-    public static void setup() {
-        RestAssured.baseURI = Config.BASE_URL;
+    @BeforeEach
+    public void setup() {
+        consumer = UsersManager.getConsumer();
+        api = new ApiClient(consumer);
     }
 
     @Test
     public void getUsersList() {
-        given().log().all()
-                .header("Content-Type", "application/json")
-                .header("Authorization", String.format("Bearer %s", Config.TOKEN))
-                .when().get("/users")
-                .then().log().all()
+        api.users.getList()
                 .statusCode(200)
                 .body("size()", is(10));
     }
 
     @Test
     public void createUser() {
-        String json = "{" +
-                "\"name\": \"Fr. Deeptiman Malik\"," +
-                String.format("\"email\": \"test_%s@example.test\",", RandomGenerator.getAlphaNumeric()) +
-                "\"gender\": \"female\"," +
-                "\"status\": \"active\"" +
-                "}";
+        User user = UsersManager.getMale();
 
-        given().log().all()
-                .header("Content-Type", "application/json")
-                .header("Authorization", String.format("Bearer %s", Config.TOKEN))
-                .body(json)
-                .when().post("/users")
-                .then().log().all()
+        api.users.create(user)
                 .statusCode(201)
                 .body("id", notNullValue());
     }
